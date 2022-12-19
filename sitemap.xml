@@ -4,7 +4,7 @@
   <url>
     <loc>https://yunzhen.github.io/2022/12/18/Flink%E9%83%A8%E7%BD%B21/</loc>
     
-    <lastmod>2022-12-18</lastmod>
+    <lastmod>2022-12-19</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -19,19 +19,10 @@
     <priority>0.6</priority>
   </url>
   
-  <url>
-    <loc>https://yunzhen.github.io/2022/12/14/hello-world/</loc>
-    
-    <lastmod>2022-12-14</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
 
   <url>
     <loc>https://yunzhen.github.io/</loc>
-    <lastmod>2022-12-18</lastmod>
+    <lastmod>2022-12-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -39,14 +30,14 @@
   
   <url>
     <loc>https://yunzhen.github.io/tags/flink/</loc>
-    <lastmod>2022-12-18</lastmod>
+    <lastmod>2022-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://yunzhen.github.io/tags/deployment/</loc>
-    <lastmod>2022-12-18</lastmod>
+    <lastmod>2022-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -55,7 +46,7 @@
   
   <url>
     <loc>https://yunzhen.github.io/categories/flink/</loc>
-    <lastmod>2022-12-18</lastmod>
+    <lastmod>2022-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
