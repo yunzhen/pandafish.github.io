@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yunzhen.github.io/2022/12/19/ssh%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95%E8%AF%A6%E8%A7%A3/</loc>
+    
+    <lastmod>2022-12-19</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://yunzhen.github.io/2022/12/18/Flink%E9%83%A8%E7%BD%B21/</loc>
     
     <lastmod>2022-12-19</lastmod>
@@ -29,14 +38,14 @@
 
   
   <url>
-    <loc>https://yunzhen.github.io/tags/flink/</loc>
+    <loc>https://yunzhen.github.io/tags/Flink/</loc>
     <lastmod>2022-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://yunzhen.github.io/tags/deployment/</loc>
+    <loc>https://yunzhen.github.io/tags/Cluster-Deployment/</loc>
     <lastmod>2022-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -45,7 +54,7 @@
 
   
   <url>
-    <loc>https://yunzhen.github.io/categories/flink/</loc>
+    <loc>https://yunzhen.github.io/categories/Flink/</loc>
     <lastmod>2022-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

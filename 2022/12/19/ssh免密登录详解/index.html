@@ -1,0 +1,728 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云祯">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="ssh免密登录原理通过非对称密钥实现认证登录，可参考ssh免密登录原理与实现SSH 原理和基本应用  客户端和服务器都生成自己的密钥对 客户端将公钥写入服务器的authorized_keys ssh server远程访问服务器，发送连接请求，并发送id_rsa.pub公钥，服务器在本地的authorized_keys中查找是否存在该公钥，如果存在，用该公钥对任意字符串加密发送回客户端，客户端使用本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ssh免密登录遇到过的坑">
+<meta property="og:url" content="https://yunzhen.github.io/2022/12/19/ssh%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="阿勒泰的森林">
+<meta property="og:description" content="ssh免密登录原理通过非对称密钥实现认证登录，可参考ssh免密登录原理与实现SSH 原理和基本应用  客户端和服务器都生成自己的密钥对 客户端将公钥写入服务器的authorized_keys ssh server远程访问服务器，发送连接请求，并发送id_rsa.pub公钥，服务器在本地的authorized_keys中查找是否存在该公钥，如果存在，用该公钥对任意字符串加密发送回客户端，客户端使用本">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-12-19T13:05:45.000Z">
+<meta property="article:modified_time" content="2022-12-19T14:43:13.984Z">
+<meta property="article:author" content="云祯">
+<meta property="article:tag" content="Cluster Deployment">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+    <meta name="google-site-verification" content="U34DcIdhk2q9fnn9pXzpE7leymOO0QX2Vmk_gU7zne4" />
+  
+  <title>ssh免密登录遇到过的坑 - 阿勒泰的森林</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yunzhen.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"UZiQFDqVpuuAh9BsYl0lEMXR-MdYXbMMI","app_key":"24dq9mStnhBPhMNYcgBaBjpf","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>阿勒泰的森林</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="ssh免密登录遇到过的坑"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-12-19 21:05" pubdate>
+          2022年12月19日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span>次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">ssh免密登录遇到过的坑</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="ssh免密登录原理"><a href="#ssh免密登录原理" class="headerlink" title="ssh免密登录原理"></a>ssh免密登录原理</h1><p>通过非对称密钥实现认证登录，可参考<br><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1484468">ssh免密登录原理与实现</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/241341815">SSH 原理和基本应用</a></p>
+<ol>
+<li>客户端和服务器都生成自己的密钥对</li>
+<li>客户端将公钥写入服务器的authorized_keys</li>
+<li>ssh server远程访问服务器，发送连接请求，并发送id_rsa.pub公钥，服务器在本地的authorized_keys中查找是否存在该公钥，如果存在，用该公钥对任意字符串加密发送回客户端，客户端使用本地的id_rsa解密发送回服务器，服务器验证两个字符串是否相同。</li>
+</ol>
+<h1 id="ssh免密的登录设置方法"><a href="#ssh免密的登录设置方法" class="headerlink" title="ssh免密的登录设置方法"></a>ssh免密的登录设置方法</h1><ol>
+<li>进入当前账号的home目录，进入.ssh文件夹</li>
+<li>ssh-keygen 生成密钥对，输入命令后一直回车即可</li>
+<li>复制公钥到远程服务器的.ssh目录下的authorized_keys文件中，有三种方法：<ol>
+<li>ssh-copy-id命令</li>
+<li>scp命令</li>
+<li>手工复制粘贴</li>
+</ol>
+</li>
+</ol>
+<h1 id="遇到的问题"><a href="#遇到的问题" class="headerlink" title="遇到的问题"></a>遇到的问题</h1><h2 id="非root账号"><a href="#非root账号" class="headerlink" title="非root账号"></a>非root账号</h2><ol>
+<li>非root账号下设置ssh免密登录，使用ssh-copy-id命令会要求输入远程服务器的root密码，可通过手工复制粘贴解决。</li>
+</ol>
+<h2 id="root账号"><a href="#root账号" class="headerlink" title="root账号"></a>root账号</h2><p>root账号下设置ssh免密登录后，始终要求输入root密码。<br>解决思路：</p>
+<ol>
+<li>检查本地生成密钥的.ssh文件夹和远程服务器上公钥复制粘贴操作的.ssh文件夹是否都是&#x2F;root目录下的。我刚开始是把登录账号的.ssh目录和root账号的.ssh目录混在了一起。注意，在某账号下ssh server1相当于ssh 账号名@server1，不同账号的远程登录目录不一样，检索的位置就不一样。</li>
+<li>检查etc&#x2F;ssh&#x2F;sshd_config配置，DenyUsers root, DenyGroups root这两行代表禁止通过远程访问根用户，需要注释掉。其它的配置也需要检查。这里我粘贴一下我最终的配置。<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-comment">#	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $</span><br><br><span class="hljs-comment"># This is the sshd server system-wide configuration file.  See</span><br><span class="hljs-comment"># sshd_config(5) for more information.</span><br><br><span class="hljs-comment"># This sshd was compiled with PATH=/usr/local/bin:/usr/bin</span><br><br><span class="hljs-comment"># The strategy used for options in the default sshd_config shipped with</span><br><span class="hljs-comment"># OpenSSH is to specify options with their default value where</span><br><span class="hljs-comment"># possible, but leave them commented.  Uncommented options override the</span><br><span class="hljs-comment"># default value.</span><br><br><span class="hljs-comment"># If you want to change the port on a SELinux system, you have to tell</span><br><span class="hljs-comment"># SELinux about this change.</span><br><span class="hljs-comment"># semanage port -a -t ssh_port_t -p tcp #PORTNUMBER</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment">#Port 22</span><br><span class="hljs-comment">#AddressFamily any</span><br><span class="hljs-comment">#ListenAddress 0.0.0.0</span><br><span class="hljs-comment">#ListenAddress ::</span><br><br>HostKey /etc/ssh/ssh_host_rsa_key<br><span class="hljs-comment">#HostKey /etc/ssh/ssh_host_dsa_key</span><br>HostKey /etc/ssh/ssh_host_ecdsa_key<br>HostKey /etc/ssh/ssh_host_ed25519_key<br><br><span class="hljs-comment"># Ciphers and keying</span><br><span class="hljs-comment">#RekeyLimit default none</span><br><br><span class="hljs-comment"># Logging</span><br><span class="hljs-comment">#SyslogFacility AUTH</span><br>SyslogFacility AUTHPRIV<br>LogLevel <span class="hljs-built_in">INFO</span><br><br><span class="hljs-comment"># Authentication:</span><br><br>LoginGraceTime 60<br>PermitRootLogin <span class="hljs-literal">yes</span><br><span class="hljs-comment">#StrictModes yes</span><br>MaxAuthTries 4<br><span class="hljs-comment">#MaxSessions 10</span><br><br>PubkeyAuthentication <span class="hljs-literal">yes</span><br><br><span class="hljs-comment"># The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2</span><br><span class="hljs-comment"># but this is overridden so installations will only check .ssh/authorized_keys</span><br>AuthorizedKeysFile	.ssh/authorized_keys<br><br><span class="hljs-comment">#AuthorizedPrincipalsFile none</span><br><br><span class="hljs-comment">#AuthorizedKeysCommand none</span><br><span class="hljs-comment">#AuthorizedKeysCommandUser nobody</span><br><br><span class="hljs-comment"># For this to work you will also need host keys in /etc/ssh/ssh_known_hosts</span><br>HostbasedAuthentication <span class="hljs-literal">no</span><br><span class="hljs-comment"># Change to yes if you don&#x27;t trust ~/.ssh/known_hosts for</span><br><span class="hljs-comment"># HostbasedAuthentication</span><br><span class="hljs-comment">#IgnoreUserKnownHosts no</span><br><span class="hljs-comment"># Don&#x27;t read the user&#x27;s ~/.rhosts and ~/.shosts files</span><br>IgnoreRhosts <span class="hljs-literal">yes</span><br><br><span class="hljs-comment"># To disable tunneled clear text passwords, change to no here!</span><br><span class="hljs-comment">#PasswordAuthentication yes</span><br>PermitEmptyPasswords <span class="hljs-literal">no</span><br>PasswordAuthentication <span class="hljs-literal">yes</span><br><br><span class="hljs-comment"># Change to no to disable s/key passwords</span><br><span class="hljs-comment">#ChallengeResponseAuthentication yes</span><br>ChallengeResponseAuthentication <span class="hljs-literal">yes</span><br><br><span class="hljs-comment"># Kerberos options</span><br><span class="hljs-comment">#KerberosAuthentication no</span><br><span class="hljs-comment">#KerberosOrLocalPasswd yes</span><br><span class="hljs-comment">#KerberosTicketCleanup yes</span><br><span class="hljs-comment">#KerberosGetAFSToken no</span><br><span class="hljs-comment">#KerberosUseKuserok yes</span><br><br><span class="hljs-comment"># GSSAPI options</span><br>GSSAPIAuthentication <span class="hljs-literal">yes</span><br>GSSAPICleanupCredentials <span class="hljs-literal">no</span><br><span class="hljs-comment">#GSSAPIStrictAcceptorCheck yes</span><br><span class="hljs-comment">#GSSAPIKeyExchange no</span><br><span class="hljs-comment">#GSSAPIEnablek5users no</span><br><br><span class="hljs-comment"># Set this to &#x27;yes&#x27; to enable PAM authentication, account processing,</span><br><span class="hljs-comment"># and session processing. If this is enabled, PAM authentication will</span><br><span class="hljs-comment"># be allowed through the ChallengeResponseAuthentication and</span><br><span class="hljs-comment"># PasswordAuthentication.  Depending on your PAM configuration,</span><br><span class="hljs-comment"># PAM authentication via ChallengeResponseAuthentication may bypass</span><br><span class="hljs-comment"># the setting of &quot;PermitRootLogin without-password&quot;.</span><br><span class="hljs-comment"># If you just want the PAM account and session checks to run without</span><br><span class="hljs-comment"># PAM authentication, then enable this but set PasswordAuthentication</span><br><span class="hljs-comment"># and ChallengeResponseAuthentication to &#x27;no&#x27;.</span><br><span class="hljs-comment"># WARNING: &#x27;UsePAM no&#x27; is not supported in Red Hat Enterprise Linux and may cause several</span><br><span class="hljs-comment"># problems.</span><br>UsePAM <span class="hljs-literal">yes</span><br><br><span class="hljs-comment">#AllowAgentForwarding yes</span><br><span class="hljs-comment">#AllowTcpForwarding yes</span><br><span class="hljs-comment">#GatewayPorts no</span><br>X11Forwarding <span class="hljs-literal">no</span><br><span class="hljs-comment">#X11DisplayOffset 10</span><br><span class="hljs-comment">#X11UseLocalhost yes</span><br><span class="hljs-comment">#PermitTTY yes</span><br><span class="hljs-comment">#PrintMotd yes</span><br><span class="hljs-comment">#PrintLastLog yes</span><br><span class="hljs-comment">#TCPKeepAlive yes</span><br><span class="hljs-comment">#UseLogin no</span><br><span class="hljs-comment">#UsePrivilegeSeparation sandbox</span><br>PermitUserEnvironment <span class="hljs-literal">no</span><br><span class="hljs-comment">#Compression delayed</span><br>ClientAliveInterval 600<br>ClientAliveCountMax 0<br><span class="hljs-comment">#ShowPatchLevel no</span><br><span class="hljs-comment">#UseDNS yes</span><br><span class="hljs-comment">#PidFile /var/run/sshd.pid</span><br><span class="hljs-comment">#MaxStartups 10:30:100</span><br><span class="hljs-comment">#PermitTunnel no</span><br><span class="hljs-comment">#ChrootDirectory none</span><br><span class="hljs-comment">#VersionAddendum none</span><br><br><span class="hljs-comment"># no default banner path</span><br>Banner /etc/issue.net<br><br><span class="hljs-comment"># Accept locale-related environment variables</span><br>AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES<br>AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT<br>AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE<br>AcceptEnv XMODIFIERS<br><br><span class="hljs-comment"># override default of no subsystems</span><br>Subsystem	sftp	/usr/libexec/openssh/sftp-server<br><br><span class="hljs-comment"># Example of overriding settings on a per-user basis</span><br><span class="hljs-comment">#Match User anoncvs</span><br><span class="hljs-comment">#	X11Forwarding no</span><br><span class="hljs-comment">#	AllowTcpForwarding no</span><br><span class="hljs-comment">#	PermitTTY no</span><br><span class="hljs-comment">#	ForceCommand cvs server</span><br>Ciphers 隐藏<br><span class="hljs-comment"># DenyUsers root</span><br><span class="hljs-comment"># DenyGroups root</span><br>AllowTcpForwarding <span class="hljs-literal">no</span><br>MaxStartups 10:30:60<br>MaxSessions 4<br></code></pre></td></tr></table></figure></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Cluster-Deployment/">#Cluster Deployment</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>ssh免密登录遇到过的坑</div>
+      <div>https://yunzhen.github.io/2022/12/19/ssh免密登录详解/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云祯</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年12月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/12/18/Flink%E9%83%A8%E7%BD%B21/" title="搭建Flink高可用集群(standalone deployment）">
+                        <span class="hidden-mobile">搭建Flink高可用集群(standalone deployment）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"UZiQFDqVpuuAh9BsYl0lEMXR-MdYXbMMI","appKey":"24dq9mStnhBPhMNYcgBaBjpf","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量
+        <span id="leancloud-site-pv"></span>
+        次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访问数
+        <span id="leancloud-site-uv"></span>
+        人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
