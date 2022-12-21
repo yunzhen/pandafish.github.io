@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yunzhen.github.io/2022/12/21/%E4%BB%8E0%E5%BC%80%E5%A7%8B%E9%83%A8%E7%BD%B2%E4%B8%80%E4%B8%AAFlink%E9%9B%86%E7%BE%A4/</loc>
+    
+    <lastmod>2022-12-21</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://yunzhen.github.io/2022/12/19/Flink%E9%83%A8%E7%BD%B2k8s%E7%AF%87/</loc>
     
     <lastmod>2022-12-21</lastmod>
@@ -12,15 +21,6 @@
   
   <url>
     <loc>https://yunzhen.github.io/2022/12/18/Flink%E9%83%A8%E7%BD%B2%E7%8B%AC%E7%AB%8B%E9%83%A8%E7%BD%B2%E7%AF%87/</loc>
-    
-    <lastmod>2022-12-21</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://yunzhen.github.io/2022/12/21/%E4%BB%8E0%E5%BC%80%E5%A7%8B%E9%83%A8%E7%BD%B2%E4%B8%80%E4%B8%AAFlink%E9%9B%86%E7%BE%A4/</loc>
     
     <lastmod>2022-12-21</lastmod>
     
