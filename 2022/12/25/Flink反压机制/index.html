@@ -16,30 +16,27 @@
   <meta name="author" content="云祯">
   <meta name="keywords" content="">
   
-    <meta name="description" content="在Flink中序列化和反序列化是影响性能的一个重要因素。不合适的序列化器的使用以及过多的序列化反序列化操作都可能极大地影响性能。就我个人的经验来说，去除代码中多余的序列化操作使得吞吐量从2万提升到了8万。 本篇博文主要围绕以下内容展开：  什么是序列化和反序列化？它通常用于什么地方？为什么序列化反序列化会较大地影响性能？ 在Flink中哪些地方会用到序列化和反序列化？ 针对序列化和反序列化的问题，">
+    <meta name="description" content="当一个作业提交到Flink集群后，我们通过什么指标观察作业的运行状态？如果作业流量突增超过了集群的负载能力，我们如何得知？如果下游发现数据出现了延迟，我们怎么去troubleshooting? 要回答以上问题，我们必须要理解flink的反压机制。通过反压指标，我们可以观察到每个子任务的运行状态，是繁忙，空闲还是拥塞？ 反压机制这个视频已经讲得很清楚了，网上的大多博文都是这个视频的复述。直接看视频即">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Flink性能调优之序列化与反序列化">
-<meta property="og:url" content="https://yunzhen.github.io/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/index.html">
+<meta property="og:title" content="Flink反压机制和反压监控">
+<meta property="og:url" content="https://yunzhen.github.io/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/index.html">
 <meta property="og:site_name" content="阿勒泰的森林">
-<meta property="og:description" content="在Flink中序列化和反序列化是影响性能的一个重要因素。不合适的序列化器的使用以及过多的序列化反序列化操作都可能极大地影响性能。就我个人的经验来说，去除代码中多余的序列化操作使得吞吐量从2万提升到了8万。 本篇博文主要围绕以下内容展开：  什么是序列化和反序列化？它通常用于什么地方？为什么序列化反序列化会较大地影响性能？ 在Flink中哪些地方会用到序列化和反序列化？ 针对序列化和反序列化的问题，">
+<meta property="og:description" content="当一个作业提交到Flink集群后，我们通过什么指标观察作业的运行状态？如果作业流量突增超过了集群的负载能力，我们如何得知？如果下游发现数据出现了延迟，我们怎么去troubleshooting? 要回答以上问题，我们必须要理解flink的反压机制。通过反压指标，我们可以观察到每个子任务的运行状态，是繁忙，空闲还是拥塞？ 反压机制这个视频已经讲得很清楚了，网上的大多博文都是这个视频的复述。直接看视频即">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://yunzhen.github.io/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-12-23-17-08-24.png">
-<meta property="og:image" content="https://yunzhen.github.io/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-10-28-10-47-09.png">
-<meta property="og:image" content="https://yunzhen.github.io/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-10-28-10-52-47.png">
-<meta property="og:image" content="https://yunzhen.github.io/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-10-27-17-37-41.png">
-<meta property="article:published_time" content="2022-12-22T15:13:09.000Z">
-<meta property="article:modified_time" content="2022-12-25T14:42:54.472Z">
+<meta property="og:image" content="https://yunzhen.github.io/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/2022-12-25-23-47-26.png">
+<meta property="og:image" content="https://yunzhen.github.io/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/2022-12-26-00-00-47.png">
+<meta property="article:published_time" content="2022-12-25T15:10:58.000Z">
+<meta property="article:modified_time" content="2022-12-25T16:01:39.812Z">
 <meta property="article:author" content="云祯">
 <meta property="article:tag" content="Flink">
-<meta property="article:tag" content="Performance Tuning">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://yunzhen.github.io/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-12-23-17-08-24.png">
+<meta name="twitter:image" content="https://yunzhen.github.io/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/2022-12-25-23-47-26.png">
   
   
   
     <meta name="google-site-verification" content="U34DcIdhk2q9fnn9pXzpE7leymOO0QX2Vmk_gU7zne4" />
   
-  <title>Flink性能调优之序列化与反序列化 - 阿勒泰的森林</title>
+  <title>Flink反压机制和反压监控 - 阿勒泰的森林</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -226,7 +223,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Flink性能调优之序列化与反序列化"></span>
+            <span id="subtitle" data-typed-text="Flink反压机制和反压监控"></span>
           
         </div>
 
@@ -237,8 +234,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2022-12-22 23:13" pubdate>
-          2022年12月22日 晚上
+        <time datetime="2022-12-25 23:10" pubdate>
+          2022年12月25日 晚上
         </time>
       </span>
     
@@ -249,7 +246,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.6k 字
+          754 字
         
       </span>
     
@@ -260,7 +257,7 @@
         
         
         
-          22 分钟
+          7 分钟
         
       </span>
     
@@ -306,60 +303,22 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">Flink性能调优之序列化与反序列化</h1>
+            <h1 style="display: none">Flink反压机制和反压监控</h1>
             
             
               <div class="markdown-body">
                 
-                <p>在Flink中序列化和反序列化是影响性能的一个重要因素。不合适的序列化器的使用以及过多的序列化反序列化操作都可能极大地影响性能。就我个人的经验来说，去除代码中多余的序列化操作使得吞吐量从2万提升到了8万。</p>
-<p>本篇博文主要围绕以下内容展开：</p>
-<ul>
-<li>什么是序列化和反序列化？它通常用于什么地方？为什么序列化反序列化会较大地影响性能？</li>
-<li>在Flink中哪些地方会用到序列化和反序列化？</li>
-<li>针对序列化和反序列化的问题，该如何做性能优化？</li>
-</ul>
-<h1 id="序列化和反序列化的基本概念"><a href="#序列化和反序列化的基本概念" class="headerlink" title="序列化和反序列化的基本概念"></a>序列化和反序列化的基本概念</h1><h2 id="序列化和反序列化"><a href="#序列化和反序列化" class="headerlink" title="序列化和反序列化"></a>序列化和反序列化</h2><p>序列化： 将数据结构或对象转化为二进制串的过程<br>反序列化：将在序列化过程中所生成的二进制串转化为数据结构或者对象的过程。</p>
-<p>对于java语言，二进制串指的是byte[]。因此在java中，把对象（如class 实例，String，Tuple等）转化为byte[]的过程就叫做序列化，反之就叫做反序列化。</p>
-<p>为什么要进行序列化？一是为了数据持久化存储，二是为了数据网络传输。 都需要把不同语言特有的对象转化为通用的字节流。<br><img src="/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-12-23-17-08-24.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="序列化格式"><a href="#序列化格式" class="headerlink" title="序列化格式"></a>序列化格式</h2><p>我们以怎样的格式（协议）将对象转化为二进制串呢？序列化格式主要分为两类：文本格式和二进制格式。文本格式是把对象视为文本，按照字符编码的方式处理；而二进制格式则是将对象按照其在内存中的存储形式处理。两种格式只是对象转化为二进制串的方式不同，最终保存的都是二进制串。</p>
-<p>举例来说</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs C++"><span class="hljs-keyword">struct</span> <span class="hljs-title class_">A</span>&#123;<br>    <span class="hljs-type">int</span> a;<br>    <span class="hljs-type">int</span> b;<br>&#125;<span class="hljs-built_in">s</span>(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>);<br></code></pre></td></tr></table></figure>
-<p>json序列化(文本格式）的结果是：’{a:1,b:2} ‘是根据字符编码序列化为文本形式。而bson（二进制格式）则是内存中的数据按其在内存中的存储形式原样取出即可。</p>
-<p>常见的序列化格式：xml,json,ProtoBuf,Thrift,MessagePack</p>
-<p>文本格式的序列化可以将对象写出字符串，二进制格式的则不能。</p>
-<h2 id="序列化工具"><a href="#序列化工具" class="headerlink" title="序列化工具"></a>序列化工具</h2><p>常见的Java序列化工具：</p>
-<ul>
-<li>Binary Formats &amp; language-specific ones<br>JavaBuiltIn（java原生）、JavaManual（根据成员变量类型，手工写）、FstSerliazation、Kryo</li>
-<li>Binary formats-generic language-unspecific ones<br>Protobuf(Google)、Thrift(Facebook)、 AvroGeneric、Hessian</li>
-<li>JSON Format<br>Jackson、Gson、FastJSON</li>
-<li>JSON-like：<br>CKS （textual JSON-like format）、BSON（JSON-like format with extended datatypes）、JacksonBson、MongoDB</li>
-<li>XML-based formats<br>XmlXStream</li>
-</ul>
-<h2 id="序列化和性能的关系"><a href="#序列化和性能的关系" class="headerlink" title="序列化和性能的关系"></a>序列化和性能的关系</h2><p>不同的序列化格式，不同的序列化工具对性能都有影响。这一块我没有深入研究。</p>
-<p>但就我使用的Jackson而言，它的序列化和反序列化使用了java的反射机制，导致性能不高。</p>
-<h1 id="Flink中序列化和反序列化"><a href="#Flink中序列化和反序列化" class="headerlink" title="Flink中序列化和反序列化"></a>Flink中序列化和反序列化</h1><p>上面提到了序列化和反序列化的用途就是数据传输和持久化存储。就一个Flink job而言，涉及到序列化和反序列化的也就是这两个场景。下面来细看。</p>
-<h2 id="序列化和反序列化场景"><a href="#序列化和反序列化场景" class="headerlink" title="序列化和反序列化场景"></a>序列化和反序列化场景</h2><h3 id="数据传输"><a href="#数据传输" class="headerlink" title="数据传输"></a>数据传输</h3><ul>
-<li>进程间： 有<br>如果不同的子任务处于不同的进程（taskmanager），数据需要经过网络传输，需要进行序列化和反序列化；  </li>
-<li>同一个进程不同线程间： 有（通常的多线程是内存共享的，但flink不一定）<br>如果是同一个taskManager的不同线程的发送任务和接收任务，接收任务会将数据从字节缓冲区的数据拉取过来而不涉及网络通信开销，数据序列化后会先通过recordwriter，然后通过local channel发送给另一个task的input gate，然后反序列化，再交给recorder reader进行处理。 注意：线程间情况下，不管任务是不是在同一个slot上运行，数据传输都会进行序列化操作</li>
-<li>同一个线程<br>通过传参的方式对象传输，不涉及序列化和通信；默认没有对象复3用，即深拷贝；开启对象复用后，为浅拷贝。</li>
-</ul>
-<h3 id="持久化存储"><a href="#持久化存储" class="headerlink" title="持久化存储"></a>持久化存储</h3><ul>
-<li>rocketDB中状态读写，如果是Heap作为stateBackend，则状态的读写不涉及序列化和反序列化。</li>
-<li>checkpoint和savepoint的存取；</li>
-</ul>
-<h2 id="Flink的序列化器"><a href="#Flink的序列化器" class="headerlink" title="Flink的序列化器"></a>Flink的序列化器</h2><p><img src="/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-10-28-10-47-09.png" srcset="/img/loading.gif" lazyload><br><img src="/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-10-28-10-52-47.png" srcset="/img/loading.gif" lazyload><br>注意： 采用第三方的序列化器需要采用对应的数据类型。</p>
-<h2 id="各种序列化器性能的比较"><a href="#各种序列化器性能的比较" class="headerlink" title="各种序列化器性能的比较"></a>各种序列化器性能的比较</h2><p><img src="/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/2022-10-27-17-37-41.png" srcset="/img/loading.gif" lazyload></p>
-<p>The fastest de&#x2F;serialization is achieved with Flink’s internal tuple and row serializers which can access these types’ fields directly without going via reflection. With roughly 30% decreased throughput as compared to tuples, Protobuf and POJO types do not perform too badly on their own and are more flexible and maintainable. Avro (specific and generic) records as well as Thrift data types further reduce performance by 20% and 30%, respectively. You definitely want to avoid Kryo as that reduces throughput further by around 50% and more!</p>
-<p>序列化方案对吞吐量有很大的影响！！！</p>
-<p>解决方案：<br>If you cannot use POJOs, try to define your data type with one of the serialization frameworks that generate specific code for it: Protobuf, Avro, Thrift (in that order, performance-wise).</p>
-<h1 id="调优方法"><a href="#调优方法" class="headerlink" title="调优方法"></a>调优方法</h1><ol>
-<li>减少不必要的序列化和反序列化。比如将可以合并的算子合并为算子链。</li>
-<li>选择合适的数据类型以及序列化工具。这一块有机会再深入研究。</li>
-</ol>
-<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
-<li><a target="_blank" rel="noopener" href="https://bbs.huaweicloud.com/blogs/178415">谈谈Flink DataStream流计算中的优化</a></li>
-<li><a target="_blank" rel="noopener" href="https://flink.apache.org/news/2020/04/15/flink-serialization-tuning-vol-1.html">Flink Serialization Tuning Vol. 1: Choosing your Serializer — if you can</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/chufuying3/article/details/61640158">文本文件序列化和二进制序列化</a></li>
+                <p>当一个作业提交到Flink集群后，我们通过什么指标观察作业的运行状态？如果作业流量突增超过了集群的负载能力，我们如何得知？如果下游发现数据出现了延迟，我们怎么去troubleshooting?</p>
+<p>要回答以上问题，我们必须要理解flink的反压机制。通过反压指标，我们可以观察到每个子任务的运行状态，是繁忙，空闲还是拥塞？</p>
+<h1 id="反压机制"><a href="#反压机制" class="headerlink" title="反压机制"></a>反压机制</h1><p>这个视频已经讲得很清楚了，网上的大多博文都是这个视频的复述。直接看视频即可。<br><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/av55487329/?vd_source=4ae95225239e82c38fe3a820e863882e">Flink 网络流控与反压剖析</a></p>
+<h1 id="反压监控"><a href="#反压监控" class="headerlink" title="反压监控"></a>反压监控</h1><p>反压监控一是可以直接看Dashboard，二是通过看网络指标。后者相比前者更为准确。</p>
+<p>网络指标主要是看inPoolUsage和outPoolUsage。前者是输入Gate网络缓冲池的使用率，后者是输出Gate网络缓冲池的使用率。结合反压机制，不难通过这两个指标分析算子的反压情况(下表不需要记忆，可以自己推导）。需要注意的是Flink中数据并不是一个一个流式传输的，而是攒在输出网络缓冲中一批一批地传。因此正常情况下outPoolUsage并不是0，而是1&#x2F;3。<br><img src="/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/2022-12-25-23-47-26.png" srcset="/img/loading.gif" lazyload></p>
+<p>inPoolUsage又可以分为exclusiveBuffersUsage和floatingBuffersUsage ，其中exclusiveBuffersUsage是每个channel专属的，而floatingBuffersUsage是所有channel共享的，一个channel的exclusiveBuffers满了就会申请floatingBuffers，因此可以通过这两个指标确定具体哪个通道产生了背压。</p>
+<p><img src="/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/2022-12-26-00-00-47.png" srcset="/img/loading.gif" lazyload><br>想要较为全面理解Flink的网络栈可以参考：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/idw_igykly724yhkgqbk">深入了解 Flink 网络栈（一）：物理实现及优化结果</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/u2k7sezduetxtewri05f">深入了解 Flink 网络栈（二）：监控、指标和处理背压</a></li>
+<li><a target="_blank" rel="noopener" href="https://nightlies.apache.org/flink/flink-docs-release-1.16/docs/deployment/memory/network_mem_tuning/">Network memory tuning guide </a></li>
 </ol>
 
                 
@@ -396,8 +355,6 @@
       
         <a href="/tags/Flink/">#Flink</a>
       
-        <a href="/tags/Performance-Tuning/">#Performance Tuning</a>
-      
     </div>
   
 </div>
@@ -408,8 +365,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Flink性能调优之序列化与反序列化</div>
-      <div>https://yunzhen.github.io/2022/12/22/Flink性能调优之序列化与反序列化/</div>
+      <div>Flink反压机制和反压监控</div>
+      <div>https://yunzhen.github.io/2022/12/25/Flink反压机制/</div>
     </div>
     <div class="license-meta">
       
@@ -421,7 +378,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2022年12月22日</div>
+          <div>2022年12月25日</div>
         </div>
       
       
@@ -453,18 +410,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/12/25/Flink%E5%8F%8D%E5%8E%8B%E6%9C%BA%E5%88%B6/" title="Flink反压机制和反压监控">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Flink反压机制和反压监控</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2022/12/22/Flink%E7%BB%B4%E8%A1%A8%E5%85%B3%E8%81%94%E6%96%B9%E6%A1%88/" title="Flink维表关联方案">
-                        <span class="hidden-mobile">Flink维表关联方案</span>
+                      <a href="/2022/12/22/Flink%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B9%8B%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" title="Flink性能调优之序列化与反序列化">
+                        <span class="hidden-mobile">Flink性能调优之序列化与反序列化</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
