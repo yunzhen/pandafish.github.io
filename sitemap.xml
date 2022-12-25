@@ -99,6 +99,13 @@
   </url>
   
   <url>
+    <loc>https://yunzhen.github.io/tags/Dimension-Table-join/</loc>
+    <lastmod>2022-12-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://yunzhen.github.io/tags/Performance-Tuning/</loc>
     <lastmod>2022-12-25</lastmod>
     <changefreq>weekly</changefreq>
@@ -107,13 +114,6 @@
   
   <url>
     <loc>https://yunzhen.github.io/tags/Cluster-Deployment/</loc>
-    <lastmod>2022-12-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://yunzhen.github.io/tags/Dimension-Table-join/</loc>
     <lastmod>2022-12-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
