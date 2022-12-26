@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yunzhen.github.io/baidu_verify_code-fWoE5GRBUq.html</loc>
+    
+    <lastmod>2022-12-26</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://yunzhen.github.io/2022/12/26/flink%E7%9A%84checkpoint%E6%9C%BA%E5%88%B6/</loc>
     
     <lastmod>2022-12-25</lastmod>
@@ -85,7 +94,7 @@
 
   <url>
     <loc>https://yunzhen.github.io/</loc>
-    <lastmod>2022-12-25</lastmod>
+    <lastmod>2022-12-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -93,28 +102,28 @@
   
   <url>
     <loc>https://yunzhen.github.io/tags/Flink/</loc>
-    <lastmod>2022-12-25</lastmod>
+    <lastmod>2022-12-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://yunzhen.github.io/tags/Dimension-Table-join/</loc>
-    <lastmod>2022-12-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://yunzhen.github.io/tags/Performance-Tuning/</loc>
-    <lastmod>2022-12-25</lastmod>
+    <lastmod>2022-12-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://yunzhen.github.io/tags/Cluster-Deployment/</loc>
-    <lastmod>2022-12-25</lastmod>
+    <lastmod>2022-12-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://yunzhen.github.io/tags/Performance-Tuning/</loc>
+    <lastmod>2022-12-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -123,7 +132,7 @@
   
   <url>
     <loc>https://yunzhen.github.io/categories/Flink/</loc>
-    <lastmod>2022-12-25</lastmod>
+    <lastmod>2022-12-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
