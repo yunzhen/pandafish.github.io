@@ -2,15 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://yunzhen.github.io/baidu_verify_code-fWoE5GRBUq.html</loc>
-    
-    <lastmod>2022-12-26</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://yunzhen.github.io/2022/12/26/flink%E7%9A%84checkpoint%E6%9C%BA%E5%88%B6/</loc>
     
     <lastmod>2022-12-25</lastmod>
@@ -115,14 +106,14 @@
   </url>
   
   <url>
-    <loc>https://yunzhen.github.io/tags/Dimension-Table-join/</loc>
+    <loc>https://yunzhen.github.io/tags/Cluster-Deployment/</loc>
     <lastmod>2022-12-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://yunzhen.github.io/tags/Cluster-Deployment/</loc>
+    <loc>https://yunzhen.github.io/tags/Dimension-Table-join/</loc>
     <lastmod>2022-12-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
